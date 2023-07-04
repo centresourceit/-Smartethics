@@ -73,6 +73,8 @@ const TakeTest = () => {
     init();
   }, []);
 
+
+
   const saveAndExit = async () => {
     const datau = await ApiCall({
       query: `
@@ -162,7 +164,7 @@ const TakeTest = () => {
     });
 
     if (datau.status) {
-      navigator("/home/result");
+      navigator("/home/resultstatus");
     } else {
       let totalScore = 0;
       answers.forEach((ans) => {
@@ -192,16 +194,31 @@ const TakeTest = () => {
         headers: { authorization: `Bearer ${token}` },
       });
       if (data.status) {
-        navigator("/home/result");
+        navigator("/home/resultstatus");
       } else {
         toast.error(data.message, { theme: "light" });
       }
     }
   };
 
+
+  const [page, setPage] = useState<number>(0);
+  const nextpage = () => {
+    if (page < 4) {
+      setPage(val => val + 1);
+    }
+  }
+  const prevpage = () => {
+    if (page > 0) {
+      setPage(val => val - 1);
+    }
+  }
+
+
+
   return (
     <>
-      <div className="grow bg-[#272934] p-4 w-full">
+      <div className="grow  p-4 w-full">
         <h1 className="text-white font-medium text-4xl">Take Test</h1>
         <div className="w-full bg-slate-400 h-[1px] my-2"></div>
         <div className="flex flex-wrap items-center mt-4">
@@ -210,7 +227,7 @@ const TakeTest = () => {
           </h1>
           <div className="grow"></div>
           <p className="text-cyan-500 font-semibold text-2xl rounded-md border-l-4 px-2 py-2 bg-cyan-500 bg-opacity-20 border-cyan-500">
-            Approx time to complete: {quecount * 2} Minutes
+            Approx time to complete: {quecount} Minutes
           </p>
         </div>
         {questions == null || questions == undefined ? (
@@ -220,68 +237,169 @@ const TakeTest = () => {
             </p>
           </>
         ) : (
-          questions.map((val: any, index: number) => (
-            <div key={index}>
-              <p className="text-green-500 font-semibold text-2xl my-4 rounded-md border-l-4 px-2 py-2 bg-green-500 bg-opacity-20 border-green-500">
-                {val.name}
-              </p>
-              {val.question_bank == null || val.question_bank == undefined ? (
-                <>
-                  <p className="text-rose-500 font-semibold text-2xl my-4 rounded-md border-l-4 px-2 py-2 bg-rose-500 bg-opacity-20 border-rose-500">
-                    There is no questions.
-                  </p>
-                </>
-              ) : (
-                val.question_bank.map((que: any, ind: number) => {
-                  count++;
-                  return (
-                    <div key={ind}>
-                      {que.questionType == "MCQ" ||
-                        que.questionType == "TANDF" ? (
-                        <MCQQuestions
-                          questionsId={que.id}
-                          queNumber={count}
-                          question={que.question}
-                          description={que.description}
-                          Options={que.answer}
-                        ></MCQQuestions>
-                      ) : (
-                        ""
-                      )}
-                      {que.questionType == "SLIDER" ? (
-                        <SliderQuestions
-                          questionsId={que.id}
-                          queNumber={count}
-                          question={que.question}
-                          description={que.description}
-                          maxnumber={100}
-                          step={10}
-                          Options={que.answer}
-                        ></SliderQuestions>
-                      ) : (
-                        ""
-                      )}
-                      {que.questionType == "PERCENTAGE" ? (
-                        <PercentQuestions
-                          questionsId={que.id}
-                          queNumber={count}
-                          question={que.question}
-                          description={que.description}
-                          option={que.answer}
-                        ></PercentQuestions>
-                      ) : (
-                        ""
-                      )}
-                    </div>
-                  );
-                })
-              )}
-            </div>
-          ))
+
+          <div>
+            <p className="text-green-500 font-semibold text-2xl my-4 rounded-md border-l-4 px-2 py-2 bg-green-500 bg-opacity-20 border-green-500">
+              {questions[page].name}
+            </p>
+            {questions[page].question_bank == null || questions[page].question_bank == undefined ? (
+              <>
+                <p className="text-rose-500 font-semibold text-2xl my-4 rounded-md border-l-4 px-2 py-2 bg-rose-500 bg-opacity-20 border-rose-500">
+                  There is no questions.
+                </p>
+              </>
+            ) : (
+              questions[page].question_bank.map((que: any, ind: number) => {
+                count++;
+                return (
+                  <div key={ind}>
+                    {que.questionType == "MCQ" ||
+                      que.questionType == "TANDF" ? (
+                      <MCQQuestions
+                        questionsId={que.id}
+                        queNumber={count}
+                        question={que.question}
+                        description={que.description}
+                        Options={que.answer}
+                      ></MCQQuestions>
+                    ) : (
+                      ""
+                    )}
+                    {que.questionType == "SLIDER" ? (
+                      <SliderQuestions
+                        questionsId={que.id}
+                        queNumber={count}
+                        question={que.question}
+                        description={que.description}
+                        maxnumber={100}
+                        step={10}
+                        Options={que.answer}
+                      ></SliderQuestions>
+                    ) : (
+                      ""
+                    )}
+                    {que.questionType == "PERCENTAGE" ? (
+                      <PercentQuestions
+                        questionsId={que.id}
+                        queNumber={count}
+                        question={que.question}
+                        description={que.description}
+                        option={que.answer}
+                      ></PercentQuestions>
+                    ) : (
+                      ""
+                    )}
+                  </div>
+                );
+              })
+            )}
+          </div>
+
+
+          // questions.map((val: any, index: number) => (
+          //   <div key={index}>
+          //     <p className="text-green-500 font-semibold text-2xl my-4 rounded-md border-l-4 px-2 py-2 bg-green-500 bg-opacity-20 border-green-500">
+          //       {val.name}
+          //     </p>
+          //     {val.question_bank == null || val.question_bank == undefined ? (
+          //       <>
+          //         <p className="text-rose-500 font-semibold text-2xl my-4 rounded-md border-l-4 px-2 py-2 bg-rose-500 bg-opacity-20 border-rose-500">
+          //           There is no questions.
+          //         </p>
+          //       </>
+          //     ) : (
+          //       val.question_bank.map((que: any, ind: number) => {
+          //         count++;
+          //         return (
+          //           <div key={ind}>
+          //             {que.questionType == "MCQ" ||
+          //               que.questionType == "TANDF" ? (
+          //               <MCQQuestions
+          //                 questionsId={que.id}
+          //                 queNumber={count}
+          //                 question={que.question}
+          //                 description={que.description}
+          //                 Options={que.answer}
+          //               ></MCQQuestions>
+          //             ) : (
+          //               ""
+          //             )}
+          //             {que.questionType == "SLIDER" ? (
+          //               <SliderQuestions
+          //                 questionsId={que.id}
+          //                 queNumber={count}
+          //                 question={que.question}
+          //                 description={que.description}
+          //                 maxnumber={100}
+          //                 step={10}
+          //                 Options={que.answer}
+          //               ></SliderQuestions>
+          //             ) : (
+          //               ""
+          //             )}
+          //             {que.questionType == "PERCENTAGE" ? (
+          //               <PercentQuestions
+          //                 questionsId={que.id}
+          //                 queNumber={count}
+          //                 question={que.question}
+          //                 description={que.description}
+          //                 option={que.answer}
+          //               ></PercentQuestions>
+          //             ) : (
+          //               ""
+          //             )}
+          //           </div>
+          //         );
+          //       })
+          //     )}
+          //   </div>
+          // ))
         )}
 
+
         <div className="flex gap-4">
-          <button
+          {
+            page != 0 ?
+              <button
+                onClick={prevpage}
+                className="text-center py-2 px-4 text-white bg-rose-500 font-semibold rounded hover:scale-105 transition-all"
+              >
+                Back
+              </button>
+              :
+              null
+          }
+
+          {page != 4 ?
+            <button
+              onClick={nextpage}
+              className="text-center py-2 px-4 text-white bg-green-500 font-semibold rounded hover:scale-105 transition-all"
+            >
+              Next
+            </button>
+            :
+            <>
+              <button
+                onClick={saveAndExit}
+                className="text-center py-2 px-4 text-white bg-cyan-500 font-semibold rounded hover:scale-105 transition-all"
+              >
+                SAVE AND EXIT
+              </button>
+
+              {answers.length == quecount ? (
+                <button
+                  onClick={submit}
+                  className="text-center py-2 px-4 text-white bg-emerald-500 font-semibold rounded hover:scale-105 transition-all"
+                >
+                  SUBMIT
+                </button>
+              ) : null}
+            </>
+          }
+
+
+
+          {/* <button
             onClick={saveAndExit}
             className="text-center py-2 px-4 text-white bg-cyan-500 font-semibold rounded hover:scale-105 transition-all"
           >
@@ -295,7 +413,7 @@ const TakeTest = () => {
             >
               SUBMIT
             </button>
-          ) : null}
+          ) : null} */}
         </div>
       </div>
       <ToastContainer></ToastContainer>
@@ -312,6 +430,7 @@ interface MCQQuestionsProps {
   Options: any[];
   queNumber: number;
 }
+
 const MCQQuestions: React.FC<MCQQuestionsProps> = (
   props: MCQQuestionsProps
 ): JSX.Element => {
@@ -320,7 +439,7 @@ const MCQQuestions: React.FC<MCQQuestionsProps> = (
   return (
     <>
       <div className="bg-white px-8 py-6 rounded-lg my-6 backdrop-filter backdrop-blur-lg bg-opacity-10">
-        <h2 className="text-white font-medium text-3xl mb-2">
+        <h2 className="text-secondary font-medium text-3xl mb-2">
           {props.queNumber}. {props.question}
         </h2>
         <h4 className="text-white font-medium text-xl mb-2">
@@ -376,7 +495,7 @@ const TFQuestions: React.FC<TFQuestionsProps> = (
   return (
     <>
       <div className="bg-white px-8 py-6 rounded-lg my-6 backdrop-filter backdrop-blur-lg bg-opacity-10">
-        <h2 className="text-white font-medium text-3xl mb-2">
+        <h2 className="text-secondary font-medium text-3xl mb-2">
           {props.queNumber}. {props.question}
         </h2>
         <h4 className="text-white font-medium text-xl mb-2">
@@ -440,7 +559,7 @@ const SliderQuestions: React.FC<SliderQuestionsProps> = (
   return (
     <>
       <div className="bg-white px-8 py-6 rounded-lg my-6 backdrop-filter backdrop-blur-lg bg-opacity-10">
-        <h2 className="text-white font-medium text-xl mb-2">
+        <h2 className="text-secondary font-medium text-xl mb-2">
           {props.queNumber}. {props.question}
         </h2>
         <h4 className="text-white font-medium text-3xl mb-2">
@@ -472,7 +591,7 @@ const SliderQuestions: React.FC<SliderQuestionsProps> = (
             {props.Options[value].answer}
           </p>
         </div>
-        <div className="flex gap-4 justify-between bg-[#272934] rounded-md px-4 py-2">
+        <div className="flex gap-4 justify-between  rounded-md px-4 py-2">
           {props.Options.map((val: any, index: number) => {
             return (
               <div key={index}>
@@ -511,17 +630,12 @@ const PercentQuestions: React.FC<PercentQuestionsProps> = (
   return (
     <>
       <div className="bg-white px-8 py-6 rounded-lg my-6 backdrop-filter backdrop-blur-lg bg-opacity-10">
-        <h2 className="text-white font-medium text-3xl mb-2">
+        <h2 className="text-secondary font-medium text-3xl mb-2">
           {props.queNumber}. {props.question}
         </h2>
         <h4 className="text-white font-medium text-xl mb-2">
           {props.description}
         </h4>
-        {/* <div className="flex items-center mt-6 justify-center">
-          <p className="text-white font-normal text-lg">NOT AT ALL LIKELY</p>
-          <div className="w-28 sm:w-60"></div>
-          <p className="text-white font-normal text-lg">EXTREMELY LIKELY</p>
-        </div> */}
         <div className="flex items-center justify-center">
           {props.option.map((value: any, index: number) => (
             <div
@@ -549,3 +663,6 @@ const PercentQuestions: React.FC<PercentQuestionsProps> = (
     </>
   );
 };
+
+
+export { MCQQuestions, SliderQuestions, PercentQuestions };

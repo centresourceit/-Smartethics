@@ -117,7 +117,29 @@ const AddComapany: React.FC = (): JSX.Element => {
             if (!data.status) {
                 toast.error(data.message, { theme: "light" });
             } else {
-                navigator("/home/company/");
+
+                const user = await ApiCall({
+                    query: `
+                    mutation updateUserById($updateUserInput:UpdateUserInput!){
+                        updateUserById(updateUserInput:$updateUserInput){
+                          id
+                        }
+                      }
+                    `,
+                    veriables: {
+                        updateUserInput: {
+                            id: Number(userId),
+                            companyId: data.data.createCompany.id
+                        },
+                    },
+                    headers: { authorization: `Bearer ${token}` },
+                });
+
+                if (!data.status) {
+                    toast.error(data.message, { theme: "light" });
+                } else {
+                    navigator("/home");
+                }
             }
         }
         else { toast.error(parsed.error.errors[0].message, { theme: "light" }); }
@@ -199,7 +221,7 @@ const AddComapany: React.FC = (): JSX.Element => {
                     onClick={addComapany}
                     className="text-center py-2 px-4 text-white bg-emerald-500 font-semibold rounded mt-4"
                 >
-                    SUBMIT
+                    Create
                 </button>
             </div>
             <ToastContainer></ToastContainer>

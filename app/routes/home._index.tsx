@@ -1,5 +1,5 @@
 
-import { LoaderArgs, json } from "@remix-run/node";
+import { LoaderArgs, json, redirect } from "@remix-run/node";
 import { Link, useLoaderData } from "@remix-run/react";
 import { Fa6SolidHeart } from "~/components/icons/Icons";
 import { userPrefs } from "~/cookies";
@@ -7,12 +7,15 @@ import { ApiCall } from "~/services/api";
 
 
 import Stripe from "stripe";
-
-
+import { useEffect, useState } from "react";
 
 export async function loader(params: LoaderArgs) {
   const cookieHeader = params.request.headers.get("Cookie");
   const cookie: any = await userPrefs.parse(cookieHeader);
+
+  if (cookie.role == "ADMIN") {
+    redirect("/home/user")
+  }
 
   const data = await ApiCall({
     query: `
@@ -22,24 +25,84 @@ export async function loader(params: LoaderArgs) {
         certificatedId,
         resultStatus,
         totalScore,
-        certified
+        certified,
+        assesement{
+          result{
+            question,
+            status
+          }
+        }
       },
     }
   `,
     veriables: {},
     headers: { authorization: `Bearer ${cookie.token}` },
   });
+
+  const user = await ApiCall({
+    query: `
+      query getUserById($id:Int!){
+        getUserById(id:$id){
+          id,
+       	  name, 
+    		  companyId, 
+          company{
+            id,
+            name,
+            website,
+            email,
+            logo,
+            ctoContact,
+            description,
+            address,
+            status
+          }
+        }
+      }
+      `,
+    veriables: {
+      id: Number(cookie.id)
+    },
+    headers: { authorization: `Bearer ${cookie.token}` },
+  });
+
   return json({
     question: data.data.getAllResults,
     token: cookie.token,
     userId: cookie.id,
-    strip_key: process.env.STRIP_KEY
+    strip_key: process.env.STRIP_KEY,
+    user: user.data.getUserById
   });
 }
 
 const UserDashboard = () => {
-  const userId = useLoaderData().userId;
-  const questiondata = useLoaderData().question != undefined ? useLoaderData().question.length > 0 ? useLoaderData().question.pop() : null : null;
+  const loader = useLoaderData();
+  const userId = loader.userId;
+  const que = loader.question;
+  const questiondata = que != undefined ? que.length > 0 ? que.pop() : null : null;
+  const user = loader.user;
+
+  const [totalScore, setTotalScore] = useState<number>(0);
+  const [quelen, setQuelen] = useState<number>(0);
+  const [error, setError] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (questiondata.totalScore == null || questiondata.totalScore == undefined) {
+      setError(true);
+    } else {
+      setTotalScore(questiondata.totalScore);
+    }
+
+    if (questiondata.assesement == null || questiondata.assesement == undefined) {
+      setError(true);
+    } else {
+      setQuelen(questiondata.assesement.result.length);
+    }
+  }, []);
+
+
+
+
 
   const stripkey = useLoaderData().strip_key;
 
@@ -74,14 +137,27 @@ const UserDashboard = () => {
     window.location.assign(session.url == null ? "" : session.url);
   };
 
+
   return (
     <>
-      <div className="grow bg-[#272934] p-4 w-full">
-        <h1 className="text-white font-medium text-2xl">
+      <div className="grow  p-4 w-full">
+
+        {
+          user.companyId == null ?
+            <div className=" my-4 rounded-md border-l-4 px-2 py-2 bg-rose-500 bg-opacity-20 border-rose-500 w-full">
+              <p className="text-rose-500 font-semibold text-2xl">
+                You haven't created your company.
+              </p>
+              <Link to={"/home/addcompanyuser"} className="bg-rose-500 text-white py-1 px-4 rounded-md text-xl mt-4 inline-block">Create</Link>
+            </div>
+            :
+            null
+        }
+        <h1 className="text-secondary font-medium text-3xl">
           Assessment History and Management Portal for the last Three
           assessments here
         </h1>
-        <div className="w-full bg-slate-400 h-[1px] my-2"></div>
+        <div className="w-full bg-secondary h-[1px] my-2"></div>
         <div className="flex items-center gap-6 my-6">
           <div className="grow">
             <p className="text-green-500 font-semibold text-xl rounded-md border-l-4 border-r-4 px-2 py-2 bg-green-500 bg-opacity-20 border-green-500 text-center">
@@ -98,32 +174,32 @@ const UserDashboard = () => {
         </div>
         <div className="flex gap-6 flex-wrap items-center justify-evenly my-8">
           <div className="bg-white bg-opacity-10 rounded-md p-4">
-            <h1 className="text-white font-medium text-3xl">Principle 1</h1>
-            <p className="text-[#865fe5] font-medium text-2xl">
+            <h1 className="text-white font-medium text-xl">Principle 1</h1>
+            <p className="text-secondary font-medium text-2xl">
               Human Rights & Privacy
             </p>
           </div>
           <div className="bg-white bg-opacity-10 rounded-md p-4">
-            <h1 className="text-white font-medium text-3xl">Principle 2</h1>
-            <p className="text-[#865fe5] font-medium text-2xl">
+            <h1 className="text-white font-medium text-xl">Principle 2</h1>
+            <p className="text-secondary font-medium text-2xl">
               Purpose Realisation
             </p>
           </div>
           <div className="bg-white bg-opacity-10 rounded-md p-4">
-            <h1 className="text-white font-medium text-3xl">Principle 3</h1>
-            <p className="text-[#865fe5] font-medium text-2xl">
+            <h1 className="text-white font-medium text-xl">Principle 3</h1>
+            <p className="text-secondary font-medium text-2xl">
               Sustainability Management
             </p>
           </div>
           <div className="bg-white bg-opacity-10 rounded-md p-4">
-            <h1 className="text-white font-medium text-3xl">Principle 4</h1>
-            <p className="text-[#865fe5] font-medium text-2xl">
+            <h1 className="text-white font-medium text-xl">Principle 4</h1>
+            <p className="text-secondary font-medium text-2xl">
               Risk Evaluation
             </p>
           </div>
           <div className="bg-white bg-opacity-10 rounded-md p-4">
-            <h1 className="text-white font-medium text-3xl">Principle 5</h1>
-            <p className="text-[#865fe5] font-medium text-2xl">
+            <h1 className="text-white font-medium text-xl">Principle 5</h1>
+            <p className="text-secondary font-medium text-2xl">
               Accountable Redesign
             </p>
           </div>
@@ -139,17 +215,17 @@ const UserDashboard = () => {
               <tr>
                 <th className="w-60"></th>
                 <th className="w-60">
-                  <p className="text-white font-normal text-2xl">
+                  <p className="text-secondary font-normal text-2xl">
                     1<sup>st</sup> Attempt
                   </p>
                 </th>
                 <th className="w-60">
-                  <p className="text-white font-normal  text-2xl">
+                  <p className="text-secondary font-normal  text-2xl">
                     2<sup>st</sup> Attempt
                   </p>
                 </th>
                 <th className="w-60">
-                  <p className="text-white font-normal  text-2xl">
+                  <p className="text-secondary font-normal  text-2xl">
                     3<sup>st</sup> Attempt
                   </p>
                 </th>
@@ -158,131 +234,131 @@ const UserDashboard = () => {
             <tbody>
               <tr>
                 <td>
-                  <p className="text-white font-semibold text-3xl">
+                  <p className="text-secondary font-semibold text-3xl">
                     Principle 1
                   </p>
                 </td>
                 <td>
-                  <p className="text-green-500 font-semibold text-3xl text-center">
-                    Met
+                  <p className="text-yellow-500 font-semibold text-2xl text-center">
+                    {questiondata == null ? "-" : questiondata.resultStatus.toString().toUpperCase()}
                   </p>
                 </td>
                 <td>
-                  <p className="text-green-500 font-semibold text-3xl text-center">
-                    Met
+                  <p className="text-green-500 font-semibold text-2xl text-center">
+                    -
                   </p>
                 </td>
                 <td>
-                  <p className="text-green-500 font-semibold text-3xl text-center">
-                    Met
+                  <p className="text-green-500 font-semibold text-2xl text-center">
+                    -
                   </p>
                 </td>
               </tr>
               <tr>
                 <td>
-                  <p className="text-white font-semibold text-3xl">
+                  <p className="text-secondary font-semibold text-3xl">
                     Principle 2
                   </p>
                 </td>
                 <td>
-                  <p className="text-rose-500 font-semibold text-3xl text-center">
-                    Not Met
+                  <p className="text-yellow-500 font-semibold text-2xl text-center">
+                    {questiondata == null ? "-" : questiondata.resultStatus.toString().toUpperCase()}
                   </p>
                 </td>
                 <td>
-                  <p className="text-yellow-500 font-semibold text-3xl text-center">
-                    Review
+                  <p className="text-green-500 font-semibold text-2xl text-center">
+                    -
                   </p>
                 </td>
                 <td>
-                  <p className="text-green-500 font-semibold text-3xl text-center">
-                    Met
+                  <p className="text-green-500 font-semibold text-2xl text-center">
+                    -
                   </p>
                 </td>
               </tr>
               <tr>
                 <td>
-                  <p className="text-white font-semibold text-3xl">
+                  <p className="text-secondary font-semibold text-3xl">
                     Principle 3
                   </p>
                 </td>
                 <td>
-                  <p className="text-green-500 font-semibold text-3xl text-center">
-                    Met
+                  <p className="text-yellow-500 font-semibold text-2xl text-center">
+                    {questiondata == null ? "-" : questiondata.resultStatus.toString().toUpperCase()}
                   </p>
                 </td>
                 <td>
-                  <p className="text-green-500 font-semibold text-3xl text-center">
-                    Met
+                  <p className="text-yellow-500 font-semibold text-2xl text-center">
+                    -
                   </p>
                 </td>
                 <td>
-                  <p className="text-green-500 font-semibold text-3xl text-center">
-                    Met
+                  <p className="text-green-500 font-semibold text-2xl text-center">
+                    -
                   </p>
                 </td>
               </tr>
               <tr>
                 <td>
-                  <p className="text-white font-semibold text-3xl">
+                  <p className="text-secondary font-semibold text-3xl">
                     Principle 4
                   </p>
                 </td>
                 <td>
-                  <p className="text-yellow-500 font-semibold text-3xl text-center">
-                    Review
+                  <p className="text-yellow-500 font-semibold text-2xl text-center">
+                    {questiondata == null ? "-" : questiondata.resultStatus.toString().toUpperCase()}
                   </p>
                 </td>
                 <td>
-                  <p className="text-green-500 font-semibold text-3xl text-center">
-                    Met
+                  <p className="text-green-500 font-semibold text-2xl text-center">
+                    -
                   </p>
                 </td>
                 <td>
-                  <p className="text-green-500 font-semibold text-3xl text-center">
-                    Met
+                  <p className="text-green-500 font-semibold text-2xl text-center">
+                    -
                   </p>
                 </td>
               </tr>
               <tr>
                 <td>
-                  <p className="text-white font-semibold text-3xl">
+                  <p className="text-secondary font-semibold text-3xl">
                     Principle 5
                   </p>
                 </td>
                 <td>
-                  <p className="text-green-500 font-semibold text-3xl text-center">
-                    Met
+                  <p className="text-yellow-500 font-semibold text-2xl text-center">
+                    {questiondata == null ? "-" : questiondata.resultStatus.toString().toUpperCase()}
                   </p>
                 </td>
                 <td>
-                  <p className="text-green-500 font-semibold text-3xl text-center">
-                    Met
+                  <p className="text-green-500 font-semibold text-2xl text-center">
+                    -
                   </p>
                 </td>
                 <td>
-                  <p className="text-green-500 font-semibold text-3xl text-center">
-                    Met
+                  <p className="text-green-500 font-semibold text-2xl text-center">
+                    -
                   </p>
                 </td>
               </tr>
               <tr>
                 <td>
-                  <p className="text-white font-semibold text-3xl">Score:</p>
+                  <p className="text-secondary font-semibold text-3xl">Score:</p>
                 </td>
                 <td>
                   <p className="text-green-500 font-semibold text-2xl text-center">
-                    3.1/5
+                    {error ? "-" : ((totalScore / 10) / quelen).toFixed(2)}/10
                   </p>
                 </td>
                 <td>
                   <p className="text-green-500 font-semibold text-2xl text-center">
-                    4.1/5
+                    -/10
                   </p>
                 </td>
                 <td>
                   <p className="text-green-500 font-semibold text-2xl text-center">
-                    4.6/5
+                    -/10
                   </p>
                 </td>
               </tr>
@@ -292,12 +368,12 @@ const UserDashboard = () => {
 
         <div className="flex my-4 flex-col sm:flex-row justify-around gap-8">
           <div>
-            <button className="text-center py-2 px-4 text-white bg-emerald-500 font-semibold rounded">
+            <button className="text-center py-2 px-4 text-white text-xl bg-emerald-500 font-semibold rounded">
               Try the full version (Paid)
             </button>
           </div>
           <div>
-            <Link to={"/home/taketest/"} className="text-center py-2 px-4 text-white bg-emerald-500 font-semibold rounded">
+            <Link to={"/home/taketest/"} className="text-center text-xl py-2 px-4 text-white bg-emerald-500 font-semibold rounded">
               Start Again
             </Link>
           </div>
@@ -309,28 +385,28 @@ const UserDashboard = () => {
         </div>
 
         <div className="flex my-8 flex-wrap justify-around gap-8">
-          <div className="bg-indigo-500 rounded-md py-2 w-80 px-4 cursor-pointer">
-            <h1 className="text-white font-medium text-3xl text-center">
-              Get your (Paid) Verified Certificate
+          <div className="bg-primary-800 rounded-md p-4 w-80 cursor-pointer">
+            <h1 className="text-secondary font-medium text-3xl text-center">
+              Get your Verified Certificate
             </h1>
-            <p className="text-center text-gray-200 mt-2">
+            <p className="text-center text-secondary mt-2">
               (Recommended for Commercial usage)
             </p>
           </div>
-          <div className="bg-indigo-500 rounded-md py-2 w-80 px-4 cursor-pointer">
-            <h1 className="text-white font-medium text-3xl text-center">
-              Get your (Paid) Recommendation
+          <div className="bg-primary-800 rounded-md p-4 w-80 cursor-pointer">
+            <h1 className="text-secondary font-medium text-3xl text-center">
+              Get Recommendation
             </h1>
-            <p className="text-center text-gray-200 mt-2">
+            <p className="text-center text-secondary mt-2">
               (Recommended for Commercial usage)
             </p>
           </div>
-          <div className="bg-indigo-500 rounded-md py-2 w-80 px-4 cursor-pointer">
-            <h1 className="text-white font-medium text-3xl text-center">
+          <div className="bg-primary-800 rounded-md p-4 w-80 cursor-pointer">
+            <h1 className="text-secondary font-medium text-3xl text-center">
               Publish Free
             </h1>
-            <p className="text-center text-gray-200 mt-2">
-              (for reserch and design conceptualisation)
+            <p className="text-center text-secondary mt-2">
+              (For research and design conceptualisation)
             </p>
           </div>
         </div>
@@ -357,7 +433,7 @@ const UserDashboard = () => {
           <div>
             <Link
               to={`/home/feedback/${userId}/`}
-              className="text-center py-2 px-4 text-white bg-emerald-500 font-semibold rounded"
+              className="text-center py-2 px-4 text0 text-white text-xl bg-emerald-500 font-semibold rounded"
             >
               Feedback
             </Link>
