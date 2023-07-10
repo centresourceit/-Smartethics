@@ -49,19 +49,19 @@ const DashBoard = () => {
 
   const navigator = useNavigate();
 
-  const init = () => {
-    if (isAdmin) {
-      achangeindex(SideBarTabs.User);
-      navigator("/home/user");
-    } else {
-      if (asideindex === SideBarTabs.None) {
-        navigator("/home");
-      }
-    }
-  };
-  useEffect(() => {
-    init();
-  }, []);
+  // const init = () => {
+  //   if (isAdmin) {
+  //     achangeindex(SideBarTabs.User);
+  //     navigator("/home/user");
+  //   } else {
+  //     if (asideindex === SideBarTabs.None) {
+  //       navigator("/home");
+  //     }
+  //   }
+  // };
+  // useEffect(() => {
+  //   init();
+  // }, []);
 
   const logoutHandle = () => {
     navigator("/logout");
@@ -71,7 +71,7 @@ const DashBoard = () => {
       <section className="h-screen w-full relative">
         <div className="flex min-h-screen relative flex-nowrap w-full">
           <div
-            className={`z-50 w-full md:w-60 bg-primary-800 p-2 md:flex flex-col md:relative fixed top-0 left-0 min-h-screen md:min-h-full md:h-auto ${isMobile ? "grid place-items-center" : "hidden"
+            className={`shrink-0 z-50 w-full md:w-60 bg-primary-800 p-2 md:flex flex-col md:relative fixed top-0 left-0 min-h-screen md:min-h-full md:h-auto ${isMobile ? "grid place-items-center" : "hidden"
               }`}
           >
             <div className="md:flex flex-col md:h-full">
@@ -202,7 +202,7 @@ const DashBoard = () => {
                         active={asideindex === SideBarTabs.None}
                       ></SidebarTab>
                     </Link>
-                    <Link
+                    {/* <Link
                       to={"/home/taketest/"}
                       onClick={() => {
                         achangeindex(SideBarTabs.TakeTesk);
@@ -227,7 +227,7 @@ const DashBoard = () => {
                         title="Result"
                         active={asideindex === SideBarTabs.RresultStatus}
                       ></SidebarTab>
-                    </Link>
+                    </Link> */}
                     <Link
                       to={"/home/usercompany/"}
                       onClick={() => {
